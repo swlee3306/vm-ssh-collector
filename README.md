@@ -1,4 +1,4 @@
-# SSH 접속을 통해서 VM 시스템 데이터를 수집하는 프로그램
+# vm-ssh-collector
 
 ## 한 줄 소개
 SSH로 여러 VM의 시스템 데이터를 수집하는 도구입니다.
@@ -27,7 +27,7 @@ SSH로 여러 VM의 시스템 데이터를 수집하는 도구입니다.
 
 ## 구성 파일
 ```
-ssh_commend/
+vm-ssh-collector/
 ├── README.md
 ├── collector/              # 데이터 수집기
 │   └── collector.go
@@ -79,5 +79,4 @@ ssh_commend/
 ```
 
 ## 구성도
-![image](https://github.com/swlee3306/ssh_commend/assets/63589323/ff39a809-93c5-4576-a9c0-fe53ca2ad189)
-
+![image](https://github.com/swlee3306/vm-ssh-collector/assets/63589323/ff39a809-93c5-4576-a9c0-fe53ca2ad189)
