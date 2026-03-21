@@ -1,82 +1,114 @@
 # vm-ssh-collector
 
 ## 한 줄 소개
-SSH로 여러 VM의 시스템 데이터를 수집하는 도구입니다.
+SSH로 여러 VM에 접속해 파일시스템 정보를 수집하고, 주기적으로 전송하는 Go 기반 수집기입니다.
 
 ## 저장소 성격
 - 분류: 인프라 / 수집기
-- 목적: VM 메트릭과 시스템 정보를 원격으로 수집
-- 핵심 기술: Go, SSH, 시스템 메트릭, DB 연동
+- 목적: VM 시스템 정보 수집, 원격 명령 실행, 주기 수집 자동화
+- 핵심 기술: Go, SSH, Gin, GORM, MySQL
 
-이 프로그램은 SSH를 통해 가상 머신(VM)에 접속하여 시스템 데이터를 수집하는 기능을 제공합니다. 수집된 데이터는 성능 모니터링, 문제 해결, 리소스 관리 등에 활용될 수 있습니다.
+## 현재 구현 범위
+- DB에서 수집 대상 VM과 접속 정보를 읽어옵니다.
+- 각 VM에 SSH로 접속해 파일시스템 정보를 수집합니다.
+- 수집 결과를 Logstash 형태의 payload로 전송합니다.
+- 주기적으로 동일한 수집 작업을 반복합니다.
+- HTTP API로 단일 VM 또는 여러 VM에 명령을 실행할 수 있습니다.
 
-## 목차
-1. [개요](#개요)
-2. [특징](#특징)
-3. [구성 파일](#구성-파일)
-4. [구성도](#구성도)
+현재 기본 수집 로직은 디스크 파일시스템 정보 기준으로 구현되어 있습니다.
 
-## 개요
-이 프로그램은 여러 VM에 대해 SSH를 통해 연결을 설정하고, CPU 사용률, 메모리 사용량, 디스크 사용량 등 다양한 시스템 데이터를 수집합니다. 수집된 데이터는 로컬 파일 시스템에 저장되거나 원격 데이터베이스로 전송될 수 있습니다.
+## 실행 방법
 
-## 특징
-- **멀티 스레드 지원**: 동시에 여러 VM에 접속하여 데이터를 수집합니다.
-- **확장성**: 다양한 시스템 데이터를 수집할 수 있도록 쉽게 확장 가능합니다.
-- **안정성**: SSH 연결이 실패할 경우 재시도 로직이 포함되어 있습니다.
-- **유연성**: 사용자 정의 명령어를 통해 추가 데이터를 수집할 수 있습니다.
-
-## 구성 파일
+### 1. 저장소 클론
+```bash
+git clone https://github.com/swlee3306/vm-ssh-collector.git
+cd vm-ssh-collector
 ```
+
+### 2. 설정 파일 작성
+기본 설정 파일 이름은 `setting.yml` 입니다.
+
+```yaml
+database:
+  dsn: "root:1234@tcp(localhost:3306)/baton?parseTime=true"
+
+collector:
+  collectorTime: 1
+```
+
+### 3. 환경 변수로 덮어쓰기
+필요하면 아래 환경 변수로 설정을 덮어쓸 수 있습니다.
+
+```bash
+export BATON_SETTING_FILENAME=setting.yml
+export BATON_DB_DSN='root:1234@tcp(localhost:3306)/baton?parseTime=true'
+export BATON_DATABASE_MAX_IDLE_CONNS=10
+export BATON_DATABASE_MAX_LIFETIME_HOUR=1
+export BATON_COLLECT_TIME=1
+export OKE_DEBUG=false
+```
+
+### 4. 실행
+```bash
+go run .
+```
+
+## HTTP API
+
+### 단일 VM 명령 실행
+```http
+POST /api/v1/sshCommend
+Content-Type: application/json
+
+{
+  "user": "ubuntu",
+  "pwd": "password",
+  "host_ip": "10.0.0.10",
+  "port": 22,
+  "cmd": "df -h"
+}
+```
+
+### 등록된 VM 전체 명령 실행
+```http
+POST /api/v1/sshCommendAll
+Content-Type: application/json
+
+{
+  "cmd": "hostname"
+}
+```
+
+## 주요 흐름
+1. `main.go`에서 설정 파일과 환경 변수를 읽습니다.
+2. DB 연결 후 수집 대상 VM 목록을 로드합니다.
+3. 초기 수집을 1회 수행합니다.
+4. `collectorTime` 기준으로 주기 수집을 반복합니다.
+5. Gin 서버에서 SSH 명령 실행 API를 제공합니다.
+
+## 주요 파일
+```text
 vm-ssh-collector/
-├── README.md
-├── collector/              # 데이터 수집기
+├── main.go
+├── main_LoadEnv.go
+├── main_LoadYml.go
+├── collector/
 │   └── collector.go
-├── go.mod
-├── go.sum
-├── internal/              # 내부 패키지
-│   ├── dblinker/          # 데이터베이스 링커
-│   │   ├── dbconnection.go
-│   │   ├── dbmd/          # 데이터베이스 모델
-│   │   │   ├── BtAgent.go
-│   │   │   ├── BtCollectorAttr.go
-│   │   │   ├── BtModuleAttr.go
-│   │   │   ├── BtResource.go
-│   │   │   ├── BtResourceAttr.go
-│   │   │   ├── BtResourceStat.go
-│   │   │   ├── VwResourceDetail.go
-│   │   │   ├── bt_collector.gen.go
-│   │   │   ├── bt_collector_provider.gen.go
-│   │   │   ├── bt_collector_type.gen.go
-│   │   │   ├── bt_module.gen.go
-│   │   │   ├── bt_provider.gen.go
-│   │   │   ├── bt_provider_attr.gen.go
-│   │   │   └── bt_provider_type.gen.go
-│   │   └── load_db.go
-│   ├── lslinker/          # 로그 서버 링커
-│   │   ├── lsapi/
-│   │   │   └── lsapi.go
-│   │   └── lsmd/
-│   │       └── lsmd.go
-│   ├── ssh/               # SSH 클라이언트
-│   │   ├── client.go
-│   │   ├── cmdline/
-│   │   │   └── cmdline.go
-│   │   └── disk/
-│   │       └── disk.go
-│   ├── sysdef/            # 시스템 정의
-│   │   └── init.go
-│   └── sysenv/            # 시스템 환경
-│       └── sysenv.go
-├── main.go                # 메인 실행 파일
-├── main_LoadEnv.go        # 환경 변수 로드
-├── main_LoadYml.go        # YAML 설정 로드
-├── print_sdk_version.sh  # SDK 버전 출력
-├── push_sdk_newversion.sh # 새 버전 푸시
-├── setting.yml            # YAML 설정 파일
-└── utils/                 # 유틸리티
-    └── router/
-        └── router.go
+├── internal/
+│   ├── dblinker/
+│   ├── lslinker/
+│   ├── ssh/
+│   ├── sysdef/
+│   └── sysenv/
+├── utils/
+│   └── router/
+└── setting.yml
 ```
 
-## 구성도
-![image](https://github.com/swlee3306/vm-ssh-collector/assets/63589323/ff39a809-93c5-4576-a9c0-fe53ca2ad189)
+## 검증
+```bash
+go test ./...
+```
+
+## 핀 저장소용 설명 문구
+SSH로 VM 파일시스템 메트릭을 수집하고 주기적으로 전송하는 Go collector
