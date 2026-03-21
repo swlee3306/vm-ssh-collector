@@ -1,12 +1,10 @@
-module ssh_commend
+module github.com/swlee3306/vm-ssh-collector
 
 go 1.21.3
 
 toolchain go1.21.5
 
 require (
-	example.invalid/private-sdk/baton-ao-sdk v0.0.10
-	example.invalid/private-sdk/baton-om-sdk v1.1.66
 	github.com/gin-gonic/gin v1.10.0
 	github.com/melbahja/goph v1.4.0
 	golang.org/x/crypto v0.24.0
@@ -20,7 +18,6 @@ require (
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
 	github.com/cloudwego/iasm v0.2.0 // indirect
-	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect

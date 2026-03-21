@@ -1,15 +1,14 @@
 package collector
 
 import (
+	"github.com/swlee3306/vm-ssh-collector/internal/ssh/disk"
+	"github.com/swlee3306/vm-ssh-collector/internal/sysenv"
 	"log"
-	"ssh_commend/internal/ssh/disk"
-	"ssh_commend/internal/sysenv"
+	"strconv"
 	"time"
 
-	lsapi "ssh_commend/internal/lslinker/lsapi"
-	lsmd "ssh_commend/internal/lslinker/lsmd"
-
-	"example.invalid/private-sdk/baton-ao-sdk/btoutil"
+	lsapi "github.com/swlee3306/vm-ssh-collector/internal/lslinker/lsapi"
+	lsmd "github.com/swlee3306/vm-ssh-collector/internal/lslinker/lsmd"
 )
 
 func RunResourceSchedulers(vm *sysenv.VmEnv) {
@@ -60,7 +59,7 @@ func RunResourceSchedulers(vm *sysenv.VmEnv) {
 
 			p.Agent.Type = "metric_collector"
 			p.Agent.Name = "ssh-collector"
-			p.Agent.LocId = btoutil.ToString(vm.PrvId)
+			p.Agent.LocId = strconv.FormatInt(vm.PrvId, 10)
 
 			p.Service.Adapter = "vm"
 			p.Service.Type = "openstack"

@@ -2,7 +2,7 @@ package ssh
 
 import (
 	"log"
-	"ssh_commend/internal/sysenv"
+	"github.com/swlee3306/vm-ssh-collector/internal/sysenv"
 	"time"
 
 	"github.com/melbahja/goph"

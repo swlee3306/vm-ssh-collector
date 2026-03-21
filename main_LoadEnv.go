@@ -2,10 +2,9 @@ package main
 
 import (
 	"os"
+	"strconv"
 
-	"ssh_commend/internal/sysenv"
-
-	"example.invalid/private-sdk/baton-om-sdk/btoutil"
+	"github.com/swlee3306/vm-ssh-collector/internal/sysenv"
 )
 
 func main_LoadEnvDb() error {
@@ -16,17 +15,17 @@ func main_LoadEnvDb() error {
 			sysenv.Database.Dsn = val
 		}
 		if val, ok := os.LookupEnv("BATON_DATABASE_MAX_IDLE_CONNS"); ok && (len(val) > 0) {
-			sysenv.Database.MaxIdleConns = btoutil.ToInt(val)
+			sysenv.Database.MaxIdleConns, _ = strconv.Atoi(val)
 		}
 		if val, ok := os.LookupEnv("BATON_DATABASE_MAX_LIFETIME_HOUR"); ok && (len(val) > 0) {
-			sysenv.Database.MaxLifetimeHour = btoutil.ToInt(val)
+			sysenv.Database.MaxLifetimeHour, _ = strconv.Atoi(val)
 		}
 	}
 
 	//Collector Time
 	{
 		if val, ok := os.LookupEnv("BATON_COLLECT_TIME"); ok && (len(val) > 0) {
-			sysenv.Collector.CollectTime = btoutil.ToInt(val)
+			sysenv.Collector.CollectTime, _ = strconv.Atoi(val)
 		}
 	}
 

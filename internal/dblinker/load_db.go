@@ -1,11 +1,9 @@
 package dblinker
 
 import (
-	"ssh_commend/internal/dblinker/dbmd"
-	"ssh_commend/internal/sysenv"
+	"github.com/swlee3306/vm-ssh-collector/internal/dblinker/dbmd"
+	"github.com/swlee3306/vm-ssh-collector/internal/sysenv"
 	"strconv"
-
-	"example.invalid/private-sdk/baton-ao-sdk/btocd"
 
 	"gorm.io/gorm"
 )
@@ -13,7 +11,13 @@ import (
 func LoadModule(db *gorm.DB) ([]*sysenv.VmEnv, error) {
 
 	var vmList []*dbmd.BtResource
-	res := db.Raw("select * from bt_resource br where br.resource_type_id = ? and (br.del_yn = 'n' or br.del_yn = 'N')", btocd.ResourceType.OsVm).Scan(&vmList)
+	res := db.Raw(`
+		select distinct br.*
+		from bt_resource br
+		inner join bt_resource_attr bra on bra.resource_id = br.id
+		where (br.del_yn = 'n' or br.del_yn = 'N')
+		  and bra.key = ?
+	`, "vm_manage_ip").Scan(&vmList)
 	if res.Error != nil {
 		return nil, res.Error
 	}
@@ -39,7 +43,14 @@ func LoadDb(db *gorm.DB, c *sysenv.VmEnv) (err error) {
 	// module attr
 	{
 		var dbList []*dbmd.BtResourceAttr
-		res := db.Raw("select * from bt_resource_attr bra left join bt_resource br on bra.resource_id = br.id where (br.del_yn= 'n' or br.del_yn= 'N') and br.id = ? and br.resource_type_id = ? order by br.id asc", c.ID, btocd.ResourceType.OsVm).Scan(&dbList)
+		res := db.Raw(`
+			select bra.*
+			from bt_resource_attr bra
+			left join bt_resource br on bra.resource_id = br.id
+			where (br.del_yn= 'n' or br.del_yn= 'N')
+			  and br.id = ?
+			order by br.id asc
+		`, c.ID).Scan(&dbList)
 		if res.Error != nil {
 			return res.Error
 		}
@@ -64,7 +75,15 @@ func LoadDb(db *gorm.DB, c *sysenv.VmEnv) (err error) {
 	// module(logstash) attr
 	{
 		var dbList []*dbmd.BtModuleAttr
-		res := db.Raw("select bma.* from bt_module bm inner join bt_module_attr bma on bm.id = bma.module_id where (bm.del_yn= 'n' or bm.del_yn= 'N') and bm.provider_id = ? and bm.module_type_id = ? order by bm.id asc", c.PrvId, btocd.ModuleType.LogstashFilter).Scan(&dbList)
+		res := db.Raw(`
+			select bma.*
+			from bt_module bm
+			inner join bt_module_attr bma on bm.id = bma.module_id
+			where (bm.del_yn= 'n' or bm.del_yn= 'N')
+			  and bm.provider_id = ?
+			  and bma.key = ?
+			order by bm.id asc
+		`, c.PrvId, "endpoints").Scan(&dbList)
 		if res.Error != nil {
 			return res.Error
 		}
@@ -79,4 +98,3 @@ func LoadDb(db *gorm.DB, c *sysenv.VmEnv) (err error) {
 
 	return nil
 }
-

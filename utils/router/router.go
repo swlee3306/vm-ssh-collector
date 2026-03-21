@@ -3,7 +3,7 @@ package router
 import (
 	"log"
 	"net/http"
-	"ssh_commend/internal/sysenv"
+	"github.com/swlee3306/vm-ssh-collector/internal/sysenv"
 
 	"github.com/gin-gonic/gin"
 )

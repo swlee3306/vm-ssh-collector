@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"ssh_commend/internal/sysenv"
+	"github.com/swlee3306/vm-ssh-collector/internal/sysenv"
 
 	"gopkg.in/yaml.v2"
 )

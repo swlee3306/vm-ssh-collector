@@ -2,9 +2,9 @@ package disk
 
 import (
 	"log"
-	"ssh_commend/internal/ssh"
-	"ssh_commend/internal/ssh/cmdline"
-	"ssh_commend/internal/sysenv"
+	"github.com/swlee3306/vm-ssh-collector/internal/ssh"
+	"github.com/swlee3306/vm-ssh-collector/internal/ssh/cmdline"
+	"github.com/swlee3306/vm-ssh-collector/internal/sysenv"
 	"strconv"
 	"strings"
 )

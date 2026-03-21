@@ -2,7 +2,7 @@ package dblinker
 
 import (
 	"log"
-	"ssh_commend/internal/sysenv"
+	"github.com/swlee3306/vm-ssh-collector/internal/sysenv"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"

@@ -1,9 +1,12 @@
 package lsapi
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"net/http"
 	"strings"
-
-	"example.invalid/private-sdk/baton-om-sdk/btoutil/restapi"
+	"time"
 )
 
 type Logstash struct {
@@ -20,13 +23,34 @@ func (r *Logstash) Init(urls string) {
 }
 
 func (r *Logstash) Send(msg interface{}) (err error) {
+	client := &http.Client{Timeout: 10 * time.Second}
 	for i := 0; i < len(r.env.urls); i++ {
 		sndIdx := (r._url_idx + i) % len(r.env.urls)
-		_, _, err = restapi.RqstPost(r.env.urls[sndIdx], nil, msg, nil)
-		if err != nil {
-			r._url_idx = sndIdx
-			break
+		payload, marshalErr := json.Marshal(msg)
+		if marshalErr != nil {
+			return fmt.Errorf("marshal logstash payload: %w", marshalErr)
 		}
+
+		req, reqErr := http.NewRequest(http.MethodPost, r.env.urls[sndIdx], bytes.NewReader(payload))
+		if reqErr != nil {
+			err = reqErr
+			continue
+		}
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, doErr := client.Do(req)
+		if doErr != nil {
+			err = doErr
+			continue
+		}
+		resp.Body.Close()
+		if resp.StatusCode >= http.StatusBadRequest {
+			err = fmt.Errorf("logstash returned status %d", resp.StatusCode)
+			continue
+		}
+
+		r._url_idx = sndIdx
+		return nil
 	}
 
 	return err

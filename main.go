@@ -2,20 +2,19 @@ package main
 
 import (
 	"fmt"
+	"github.com/swlee3306/vm-ssh-collector/collector"
+	"github.com/swlee3306/vm-ssh-collector/internal/dblinker"
+	"github.com/swlee3306/vm-ssh-collector/internal/ssh"
+	"github.com/swlee3306/vm-ssh-collector/internal/sysdef"
+	"github.com/swlee3306/vm-ssh-collector/internal/sysenv"
+	"github.com/swlee3306/vm-ssh-collector/utils/router"
 	"log"
 	"os"
 	"os/signal"
-	"ssh_commend/collector"
-	"ssh_commend/internal/dblinker"
-	"ssh_commend/internal/ssh"
-	"ssh_commend/internal/sysdef"
-	"ssh_commend/internal/sysenv"
-	"ssh_commend/utils/router"
 	"strconv"
 	"syscall"
 	"time"
 
-	"example.invalid/private-sdk/baton-ao-sdk/btoutil"
 	"gorm.io/gorm"
 )
 
@@ -38,8 +37,9 @@ func main() {
 	// 초기화
 	{
 		// 시간 위치 설정
-		//btoutil.SetDefaultTimeZone("UTC")
-		btoutil.SetDefaultTimeZone("Asia/Seoul")
+		if loc, tzErr := time.LoadLocation("Asia/Seoul"); tzErr == nil {
+			time.Local = loc
+		}
 
 		// 디버그 모드 설정
 		if val, ok := os.LookupEnv("OKE_DEBUG"); ok && (len(val) > 0) {
